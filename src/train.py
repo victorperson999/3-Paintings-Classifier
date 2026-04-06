@@ -45,7 +45,7 @@ from sklearn.metrics import accuracy_score
 # ─────────────────────────────────────────────
 # 1. LOAD DATA
 # ─────────────────────────────────────────────
-df = pd.read_csv("ml_challenge_dataset.csv")
+df = pd.read_csv("src/ml_challenge_dataset.csv")
 
 COL_NAMES = {
     "unique_id": "id",
@@ -160,7 +160,7 @@ vectorizers = {}
 for tcol in text_cols_to_bow:
     df[tcol] = df[tcol].fillna("")
     vec = CountVectorizer(
-        max_features=150,
+        max_features=200,
         stop_words="english",
         min_df=5,
         binary=True,

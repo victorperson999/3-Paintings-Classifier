@@ -130,15 +130,15 @@ We decided that "What season does this art piece remind you of?" should be treat
 
 We interpreted the four likert questions as essentially numeric features, as the answers are on a scale of 1-5 and the number being close indicates a similar level of feeling. There are some clear correlations present, such high "content" and "calm" feelings being more correlated with "Water Lily".
 
-Lastly, we decided to use a Bag of Words representation for the three free response questions (description, food, soundtrack) as they are all open-ended questions with a variety of answers. We ended up not including the soundtrack feature as through ablation where we excluded the soundtrack feature from our model, we found that removing the soundtrack feature actually improved our model performance, suggesting that the soundtrack feature may be noisy and not very useful for our model.
+Lastly, we decided to use a Bag of Words representation implemented with \texttt{sklearn}'s \texttt{CountVectorizer} for the three free response questions (description, food, soundtrack) as they are all open-ended questions with a variety of answers. We ended up not including the soundtrack feature as through ablation where we excluded the soundtrack feature from our model, we found that removing the soundtrack feature actually improved our model performance, suggesting that the soundtrack feature may be noisy and not very useful for our model.
 
-We chose to split our data into 80\% training set and 20\% validation set, stratified so that each subset maintains the same proportion of samples from each class of target paintings. Considering the limited amount of data we are working with and the fact that a lot of the data is incomplete, instead of using a separate test set and diminishing the size of our training/validation sets, we decided to use cross-validation to evaluate our model performance.
+We chose to split our data into 80\% training set and 20\% validation set, stratified so that each subset maintains the same proportion of samples from each class of target paintings. Considering the limited amount of data we are working with and the fact that a lot of the data is incomplete, instead of using a separate test set and diminishing the size of our training/validation sets, we decided to use cross-validation to evaluate our model performance. \cite{sklearncrossval}
 
 \section{Model Exploration}
 
 We looked at a variety of models that seemed most likely to give the best results: logistic regression, random forest classifiers, naive bayes, and MLPs. For logistic regression, we standardized the numeric features as we are performing regularization, and then we tuned the (inverse) regularization strength hyperparameter $C$. For random forest classifiers, the data input was fine the way it was, and we tuned both the number of estimators (trees in the forest) as well as the maximum depth of the trees.
 
-We also explored using a naive bayes model. Since our data is both numeric and categorical, we explored using a Gaussian naive bayes model, which also required standardization of the numeric features. As well, we explored using a Complement naive bayes model, which was recommended by \texttt{sklearn} for imbalanced datasets and for text classification, which could be helpful for parsing the BoW features. Lastly, we explored using a MLP model, which also required standardization of the numeric features. We tuned both the hidden layer sizes and the regularization strength $\alpha$.
+We also explored using a naive bayes model. Since our data is both numeric and categorical, we explored using a Gaussian naive bayes model, which also required standardization of the numeric features. As well, we explored using a Complement naive bayes model, which was recommended by \texttt{sklearn} for imbalanced datasets and for text classification, which could be helpful for parsing the BoW features \cite{sklearnnb}. Lastly, we explored using a MLP model, which also required standardization of the numeric features. We tuned both the hidden layer sizes and the regularization strength $\alpha$.
 
 \section{Model Choice and Hyperparameters}
 
@@ -165,35 +165,37 @@ For the logistic regression model, the only hyperparameter that required tuning 
 	\caption{Accuracy of logistic regression for various $C$}
 \end{figure}
 
-Therefore, our final model choice for this challenge is a Logistic Regression model with an inverse regularization strength of $C=0.1$. After selecting this model, we considered what other hyperparameters we could tune, as well as any other optimizations we could make to improve model performance. First, 
+Therefore, our final model choice for this challenge is a Logistic Regression model with an inverse regularization strength of $C=0.1$. After selecting this model, we considered what other hyperparameters we could tune, as well as any other optimizations we could make to improve model performance. First, we realized that another hyperparameter we could tune was the way we are representing the free response questions as BoW features. We could decide to use a TF-IDF representation instead of a count representation, or we could decide to use bigrams instead of unigrams; we could also tune the number of features we are including in our BoW representation.
 
+After iterating through numerous combinations of these BoW hyperparameters, we found that the best combination was consistently using a count representation and unigrams. We then iterated through various values for the maximum number of features to include, and found that the best value was around 200 features as seen in \textit{Figure 7}.
 
-First, we performed an ablation study to see whether the removal of any features would actually improve our model performance and found that the removal of the soundtrack BoW 
+\begin{figure}[h]
+	\centering
+	\includegraphics[width=0.7\linewidth]{bow_hyperparams.png}
+	\captionsetup{width=0.7\linewidth}
+	\caption{Bag of Words max feature amount hyperparameter tuning for a Count representation with unigrams}
+\end{figure}
+
+Finally, we performed an ablation study to see whether the removal of any features would actually improve our model performance. As seen in \textit{Figure 8}, we found that the removal of the soundtrack BoW feature actually improved our model performance by 0.3\%, suggesting that the soundtrack feature may be noisy and not very useful for our model. This matches with empircal evaluation of the dataset, as there are very varied answers to the soundtrack question, and it is difficult to find a clear correlation between the soundtrack answers and the target paintings. Thus, we decided to remove the soundtrack BoW feature from our final model.
+
+\begin{figure}[h]
+	\centering
+	\includegraphics[width=0.7\linewidth]{feature_ablation.png}
+	\captionsetup{width=0.7\linewidth}
+	\caption{Feature Ablation Study resulting in the removal of the soundtrack BoW feature}
+\end{figure}
 
 \section{Prediction}
 
-\textbf{Worth 1 points. No more than 1 page.} How well would you expect your model to perform on the
-test set? We are looking for:
-\begin{itemize}
-	\item A point estimate for your performance, \textbf{not a range}.
-	\item A reasoned explanation of your expected model performance, with empirical
-	evidence supporting your explanation. 
-	You are not graded on the closeness of your estimate to the final test accuracy,
-	but you are graded on your reasoning.
-\end{itemize}
-
+After again training our final logistic regression model on the training set, we evaluated the model using cross-validation—which acted effectively as our test set—and found that our final model had a cross-validation accuracy of $0.8855\pm 0.0070$. Since this cross-validation result is a reasonable estimate for real world performce, we estimate that our model will also perform with an accuracy of $0.8855$ on the final test set. \cite{sklearncrossval}
 
 \section{Workload Distribution}
 
-Describe what each person in the group contributed
-to the project. A 1-2 sentence description of each person's role is sufficient.
-Each student's description must be written by that student in order for them
-to receive credit for the project.
-
-
-\section{References}
-
-Use references whenever appropriate (e.g., when you consult textbooks, research papers, online tutorials, or external code). Cite in the text using \verb|\cite{}|. For example, let's cite the two references provided in the \texttt{.bib} file \cite{bishop2006prml,hastie2009esl}. (Replace these with your own references.)
+\begin{itemize}
+	\item Victor Jiang:
+	\item Yuelin Wu: I was mainly responsible with the hyperparameter tuning for the Random Forest and Logistic Regression models, as well as the tuning for the BoW features. I also wrote the final report, with input from my teammates.
+	\item William Penn:
+\end{itemize}
 
 \bibliographystyle{plain}
 \bibliography{references}

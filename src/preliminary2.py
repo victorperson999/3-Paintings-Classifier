@@ -7,12 +7,11 @@ Builds on explore.py results. Experiments with:
   3. Ensemble methods (soft voting, stacking)
 """
 
-import pandas as pd
-import numpy as np
 import re
 import warnings
-warnings.filterwarnings("ignore")
-
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split, StratifiedKFold, cross_val_score
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier, VotingClassifier
@@ -22,6 +21,8 @@ from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from sklearn.metrics import accuracy_score
 from sklearn.pipeline import Pipeline
+
+warnings.filterwarnings("ignore")
 
 # ─────────────────────────────────────────────
 # PREPROCESSING (same as explore.py)
@@ -215,30 +216,36 @@ print("=" * 70)
 
 bow_configs = [
     # (label, bow_type, max_features, ngram_range, min_df, binary)
-    ("No text",           "count", 50,  (1,1), 5, True),   # text excluded
+    # ("No text",           "count", 50,  (1,1), 5, True),   # text excluded
     ("Count 30w unigram", "count", 30,  (1,1), 5, True),
     ("Count 50w unigram", "count", 50,  (1,1), 5, True),
     ("Count 75w unigram", "count", 75,  (1,1), 5, True),
     ("Count 100w unigram","count", 100, (1,1), 5, True),
     ("Count 150w unigram","count", 150, (1,1), 5, True),
+    ("Count 175w unigram","count", 175, (1,1), 5, True),
     ("Count 200w unigram","count", 200, (1,1), 5, True),
+    ("Count 250w unigram","count", 250, (1,1), 5, True),
     ("Count 300w unigram","count", 300, (1,1), 5, True),
-    ("Count 50w bigram",  "count", 50,  (1,2), 5, True),
-    ("Count 100w bigram", "count", 100, (1,2), 5, True),
-    ("Count 150w bigram", "count", 150, (1,2), 5, True),
-    ("Count 200w bigram", "count", 200, (1,2), 5, True),
-    ("Count 300w bigram", "count", 300, (1,2), 5, True),
-    ("TF-IDF 50w unigram","tfidf", 50,  (1,1), 5, False),
-    ("TF-IDF 100w unigram","tfidf",100, (1,1), 5, False),
-    ("TF-IDF 100w bigram","tfidf", 100, (1,2), 5, False),
-    ("TF-IDF 150w bigram","tfidf", 150, (1,2), 5, False),
-    ("TF-IDF 200w bigram","tfidf", 200, (1,2), 5, False),
-    ("Count 50w min_df=3","count", 50,  (1,1), 3, True),
-    ("Count 100w min_df=3","count",100, (1,1), 3, True),
-    ("Count 100w bigram min_df=3","count",100,(1,2),3,True),
+    ("Count 400w bigram", "count", 400, (1,2), 5, True),
+    # ("Count 50w bigram",  "count", 50,  (1,2), 5, True),
+    # ("Count 100w bigram", "count", 100, (1,2), 5, True),
+    # ("Count 150w bigram", "count", 150, (1,2), 5, True),
+    # ("Count 200w bigram", "count", 200, (1,2), 5, True),
+    # ("Count 250w bigram", "count", 250, (1,2), 5, True),
+    # ("Count 300w bigram", "count", 300, (1,2), 5, True),
+    # ("Count 400w bigram", "count", 400, (1,2), 5, True),
+    # ("TF-IDF 50w unigram","tfidf", 50,  (1,1), 5, False),
+    # ("TF-IDF 100w unigram","tfidf",100, (1,1), 5, False),
+    # ("TF-IDF 100w bigram","tfidf", 100, (1,2), 5, False),
+    # ("TF-IDF 150w bigram","tfidf", 150, (1,2), 5, False),
+    # ("TF-IDF 200w bigram","tfidf", 200, (1,2), 5, False),
+    # ("Count 50w min_df=3","count", 50,  (1,1), 3, True),
+    # ("Count 100w min_df=3","count",100, (1,1), 3, True),
+    # ("Count 100w bigram min_df=3","count",100,(1,2),3,True),
 ]
 
 bow_results = []
+max_features = []
 for label, btype, mf, ngram, mdf, binary in bow_configs:
     include = label != "No text"
     X_tr, X_v, _ = build_features(
@@ -248,7 +255,18 @@ for label, btype, mf, ngram, mdf, binary in bow_configs:
     train_acc, val_acc, _, _ = scale_and_eval(X_tr, X_v)
     gap = train_acc - val_acc
     bow_results.append((label, X_tr.shape[1], train_acc, val_acc, gap))
+    max_features.append(mf)
     print(f"  {label:30s} | feats={X_tr.shape[1]:4d} | Train: {train_acc:.4f} | Val: {val_acc:.4f} | Gap: {gap:+.4f}")
+
+# plt.figure(figsize=(10, 6))
+# plt.plot(max_features, [r[2] for r in bow_results], marker='o', label='Train Accuracy')
+# plt.plot(max_features, [r[3] for r in bow_results], marker='s', label='Validation Accuracy')
+# plt.xlabel('Max Features')
+# plt.ylabel('Accuracy')
+# plt.title('BoW hyperparameter tuning for max features')
+# plt.legend()
+# plt.show()
+
 
 print("\nTop 5 by Val Acc:")
 for row in sorted(bow_results, key=lambda x: -x[3])[:5]:

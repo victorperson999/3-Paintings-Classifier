@@ -178,8 +178,9 @@ vectorizers = {}
 for tcol in text_cols_to_bow:
     df[tcol] = df[tcol].fillna("")
     vec = CountVectorizer(
-        max_features=50,       # top 50 words per text column
+        max_features=200,       # top 50 words per text column
         stop_words="english",  # remove common words
+        ngram_range=(1, 1),    # unigrams
         min_df=5,              # word must appear in at least 5 docs
         binary=True            # presence/absence, not counts
     )
