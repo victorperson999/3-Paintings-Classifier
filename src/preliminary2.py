@@ -26,7 +26,7 @@ from sklearn.pipeline import Pipeline
 # ─────────────────────────────────────────────
 # PREPROCESSING (same as explore.py)
 # ─────────────────────────────────────────────
-df = pd.read_csv("ml_challenge_dataset.csv")
+df = pd.read_csv("src/ml_challenge_dataset.csv")
 
 COL_NAMES = {
     "unique_id": "id",
@@ -221,13 +221,18 @@ bow_configs = [
     ("Count 75w unigram", "count", 75,  (1,1), 5, True),
     ("Count 100w unigram","count", 100, (1,1), 5, True),
     ("Count 150w unigram","count", 150, (1,1), 5, True),
+    ("Count 200w unigram","count", 200, (1,1), 5, True),
+    ("Count 300w unigram","count", 300, (1,1), 5, True),
     ("Count 50w bigram",  "count", 50,  (1,2), 5, True),
     ("Count 100w bigram", "count", 100, (1,2), 5, True),
     ("Count 150w bigram", "count", 150, (1,2), 5, True),
+    ("Count 200w bigram", "count", 200, (1,2), 5, True),
+    ("Count 300w bigram", "count", 300, (1,2), 5, True),
     ("TF-IDF 50w unigram","tfidf", 50,  (1,1), 5, False),
     ("TF-IDF 100w unigram","tfidf",100, (1,1), 5, False),
     ("TF-IDF 100w bigram","tfidf", 100, (1,2), 5, False),
     ("TF-IDF 150w bigram","tfidf", 150, (1,2), 5, False),
+    ("TF-IDF 200w bigram","tfidf", 200, (1,2), 5, False),
     ("Count 50w min_df=3","count", 50,  (1,1), 3, True),
     ("Count 100w min_df=3","count",100, (1,1), 3, True),
     ("Count 100w bigram min_df=3","count",100,(1,2),3,True),

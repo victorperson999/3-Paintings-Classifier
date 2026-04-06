@@ -1,12 +1,8 @@
-import pandas as pd
-import numpy as np
 import sys
-import csv
-import random
 import re
 import os
-
-# use numpy, pandas, sys, csv, random..
+import pandas as pd
+import numpy as np
 
 def load_model():
     """
@@ -49,7 +45,7 @@ def parse_likert(val):
         return int(m.group(1))
     else:
         return np.nan
-    
+
 
 def parse_price(val):
     """
@@ -57,7 +53,7 @@ def parse_price(val):
     """
     if pd.isna(val):
         return np.nan
-    
+
     s = str(val).replace("$", "").replace(",", "").strip()
     try:
         return max(float(s), 0)
@@ -70,7 +66,7 @@ def parse_price(val):
             return max(float(m[0]), 0)
         except ValueError:
             pass
-    
+
     return np.nan
 
 
@@ -132,7 +128,6 @@ def preprocess(df, model):
         "If this painting was a food, what would be?": "text_food",
     }
     df = df.rename(columns=col_map)
-    N = len(df)
     medians = model["median_vals"]
 
     #numeric features
@@ -212,10 +207,9 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:
         file_path = sys.argv[1]
     else:
-        file_path = "ml_challenge_dataset.csv"
- 
+        file_path = "src/ml_challenge_dataset.csv"
+
     preds = predict_all(file_path)
     print(f"Made {len(preds)} predictions")
     print(f"Distribution: { {p: preds.count(p) for p in set(preds)} }")
     print(f"First 10: {preds[:10]}")
-

@@ -13,25 +13,26 @@ This script does:
 Usage:  python3 explore.py
 """
 
-import pandas as pd
-import numpy as np
 import re
 import warnings
-warnings.filterwarnings("ignore")
-
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split, cross_val_score, StratifiedKFold
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.naive_bayes import GaussianNB, MultinomialNB, ComplementNB
+from sklearn.naive_bayes import GaussianNB, ComplementNB
 from sklearn.neural_network import MLPClassifier
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 
+warnings.filterwarnings("ignore")
+
 # ─────────────────────────────────────────────
 # 1. LOAD DATA
 # ─────────────────────────────────────────────
-df = pd.read_csv("ml_challenge_dataset.csv")
+df = pd.read_csv("src/ml_challenge_dataset.csv")
 
 # Short column aliases for convenience
 COL_NAMES = {
@@ -60,7 +61,7 @@ print("=" * 60)
 print(f"Shape: {df.shape}")
 print(f"\nTarget distribution:\n{df['target'].value_counts()}")
 print(f"\nMissing values:\n{df.isnull().sum()}")
-print(f"\nMissing % per column:")
+print("\nMissing % per column:")
 for col in df.columns:
     pct = df[col].isnull().mean() * 100
     if pct > 0:
@@ -253,16 +254,32 @@ def evaluate_model(name, model, Xtr, Xv, ytr, yv):
     results.append({"Model": name, "Train Acc": train_acc, "Val Acc": val_acc,
                      "Gap": train_acc - val_acc})
     print(f"  {name:45s} | Train: {train_acc:.4f} | Val: {val_acc:.4f} | Gap: {train_acc - val_acc:.4f}")
-    return model
+    return train_acc, val_acc
+
 
 # ── 4a. Logistic Regression (various regularization strengths) ──
 print("\n--- Logistic Regression ---")
-for C in [0.01, 0.1, 1.0, 10.0]:
-    evaluate_model(
+train_accs, val_accs = [], []
+# Hyperparameter tuning: C
+# reg_strengths = [i / 100 for i in range(1, 20)]
+reg_strengths = [0.05, 0.01, 0.1, 1.0]
+for C in reg_strengths:
+    train_acc, val_acc = evaluate_model(
         f"LogReg (C={C})",
         LogisticRegression(C=C, max_iter=1000, solver="lbfgs"),
         X_train_scaled, X_val_scaled, y_train, y_val
     )
+    train_accs.append(train_acc)
+    val_accs.append(val_acc)
+
+# plt.plot(reg_strengths, train_accs, label="Training Accuracy", marker="o")
+# plt.plot(reg_strengths, val_accs, label="Validation Accuracy", marker="o")
+# plt.xlabel("C (Inverse Regularization Strength)")
+# plt.ylabel("Accuracy")
+# plt.ylim(0.5, 1.0)
+# plt.legend()
+# plt.show()
+
 
 # ── 4b. Random Forest (various n_estimators and max_depth) ──
 print("\n--- Random Forest ---")
@@ -295,16 +312,18 @@ for alpha in [0.1, 0.5, 1.0, 2.0]:
         X_train_nonneg, X_val_nonneg, y_train, y_val
     )
 
+
 # ── 4d. MLP Neural Network ──
 print("\n--- MLP Neural Network ---")
-for hidden in [(64,), (128,), (64, 32), (128, 64)]:
-    for alpha in [0.001, 0.01]:
+for hidden in [(64,), (96,), (128,), (256,), (512,)]:
+    # for alpha in [0.001, 0.01, 0.1, 1]:
         evaluate_model(
-            f"MLP (hidden={hidden}, alpha={alpha})",
-            MLPClassifier(hidden_layer_sizes=hidden, alpha=alpha, max_iter=500,
+            f"MLP (hidden={hidden}, alpha=0.01)",
+            MLPClassifier(hidden_layer_sizes=hidden, alpha=0.01, max_iter=500,
                           random_state=42, early_stopping=True, validation_fraction=0.15),
             X_train_scaled, X_val_scaled, y_train, y_val
         )
+
 
 # ─────────────────────────────────────────────
 # 6. RESULTS SUMMARY TABLE
@@ -336,11 +355,12 @@ X_all_nonneg = X.clip(lower=0)
 cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
 
 cv_models = [
-    ("LogReg (C=1.0)", LogisticRegression(C=1.0, max_iter=1000), X_all_scaled),
-    ("LogReg (C=10.0)", LogisticRegression(C=10.0, max_iter=1000), X_all_scaled),
-    ("RF (n=200, depth=20)", RandomForestClassifier(n_estimators=200, max_depth=20, random_state=42), X),
-    ("RF (n=200, depth=None)", RandomForestClassifier(n_estimators=200, max_depth=None, random_state=42), X),
-    ("MLP (128,64) alpha=0.01", MLPClassifier(hidden_layer_sizes=(128,64), alpha=0.01, max_iter=500, random_state=42, early_stopping=True), X_all_scaled),
+    ("LogReg (C=0.05)", LogisticRegression(C=0.05, max_iter=1000), X_all_scaled),
+    ("LogReg (C=0.1)", LogisticRegression(C=0.1, max_iter=1000), X_all_scaled),
+    ("RF (n=200, depth=10)", RandomForestClassifier(n_estimators=200, max_depth=10, random_state=42), X),
+    ("RF (n=50, depth=None)", RandomForestClassifier(n_estimators=50, max_depth=None, random_state=42), X),
+    ("MLP (96,) alpha=0.01", MLPClassifier(hidden_layer_sizes=(96,), alpha=0.01, max_iter=500, random_state=42, early_stopping=True), X_all_scaled),
+    ("MLP (64,) alpha=0.01", MLPClassifier(hidden_layer_sizes=(64,), alpha=0.01, max_iter=500, random_state=42, early_stopping=True), X_all_scaled),
     ("ComplementNB (alpha=1.0)", ComplementNB(alpha=1.0), X_all_nonneg),
 ]
 
