@@ -132,7 +132,7 @@ We interpreted the four likert questions as essentially numeric features, as the
 
 Lastly, we decided to use a Bag of Words representation implemented with \texttt{sklearn}'s \texttt{CountVectorizer} for the three free response questions (description, food, soundtrack) as they are all open-ended questions with a variety of answers. We ended up not including the soundtrack feature as through ablation where we excluded the soundtrack feature from our model, we found that removing the soundtrack feature actually improved our model performance, suggesting that the soundtrack feature may be noisy and not very useful for our model.
 
-We chose to split our data into 80\% training set and 20\% validation set, stratified so that each subset maintains the same proportion of samples from each class of target paintings. Considering the limited amount of data we are working with and the fact that a lot of the data is incomplete, instead of using a separate test set and diminishing the size of our training/validation sets, we decided to use cross-validation to evaluate our model performance. \cite{sklearncrossval}
+We chose to split our data into 80\% training set and 20\% validation set, stratified so that each subset maintains the same proportion of samples from each class of target paintings. Considering the limited amount of data we are working with and the fact that a lot of the data is incomplete, instead of using a separate test set and diminishing the size of our training/validation sets, we decided to use cross-validation to evaluate our model performance \cite{sklearncrossval}.
 
 \section{Model Exploration}
 
@@ -165,7 +165,7 @@ For the logistic regression model, the only hyperparameter that required tuning 
 	\caption{Accuracy of logistic regression for various $C$}
 \end{figure}
 
-Therefore, our final model choice for this challenge is a Logistic Regression model with an inverse regularization strength of $C=0.1$. After selecting this model, we considered what other hyperparameters we could tune, as well as any other optimizations we could make to improve model performance. First, we realized that another hyperparameter we could tune was the way we are representing the free response questions as BoW features. We could decide to use a TF-IDF representation instead of a count representation, or we could decide to use bigrams instead of unigrams; we could also tune the number of features we are including in our BoW representation.
+Therefore, our final model choice for this challenge is a Logistic Regression model with an inverse regularization strength of $C=0.1$. After selecting this model, we considered what other hyperparameters we could tune, as well as any other optimizations we could make to improve model performance. First, we realized that another hyperparameter we could tune was the way we are representing the free response questions as BoW features. We could decide to use a TF-IDF representation instead of a count representation, or we could decide to use bigrams instead of unigrams; we could also tune the number of features we are including in our BoW representation \cite{sklearntextextract}.
 
 After iterating through numerous combinations of these BoW hyperparameters, we found that the best combination was consistently using a count representation and unigrams. We then iterated through various values for the maximum number of features to include, and found that the best value was around 200 features as seen in \textit{Figure 7}.
 
@@ -187,7 +187,7 @@ Finally, we performed an ablation study to see whether the removal of any featur
 
 \section{Prediction}
 
-After again training our final logistic regression model on the training set, we evaluated the model using cross-validation—which acted effectively as our test set—and found that our final model had a cross-validation accuracy of $0.8855\pm 0.0070$. Since this cross-validation result is a reasonable estimate for real world performce, we estimate that our model will also perform with an accuracy of $0.8855$ on the final test set. \cite{sklearncrossval}
+After again training our final logistic regression model on the training set, we evaluated the model using cross-validation—which acted effectively as our test set—and found that our final model had a cross-validation accuracy of $0.8855\pm 0.0070$. Since this cross-validation result is a reasonable estimate for real world performce, we estimate that our model will also perform with an accuracy of $0.8855$ on the final test set \cite{sklearncrossval}.
 
 \section{Workload Distribution}
 
