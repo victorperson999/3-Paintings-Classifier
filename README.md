@@ -1,6 +1,6 @@
-# Painting Response Classifier
+# 3 Paintings Response Classifier
 
-A machine learning classifier that predicts viewer responses to paintings, built as part of the CSC311 (Introduction to Machine Learning) challenge project at the University of Toronto. The system uses a Logistic Regression model with a custom 322-feature representation and ships with a **scikit-learn-free inference pipeline** for lightweight, dependency-minimal deployment.
+A machine learning classifier that predicts viewer responses to the paintings of: The Persistence of Memory - by Salvador Dalí, The Starry Night - by Vincent Van Gogh, and one of the Water Lilies paintings - by Claude Monet, as part of the CSC311 (Introduction to Machine Learning) challenge project at the University of Toronto. The system uses a Logistic Regression model with a custom 322-feature representation and ships with a **scikit-learn-free inference pipeline** for lightweight, dependency-minimal deployment.
 
 ---
 
