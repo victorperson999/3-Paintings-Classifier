@@ -47,7 +47,7 @@ Before selecting Logistic Regression, four model families were evaluated and com
 | **Logistic Regression** | `C=0.1`, L2 regularization | **0.8796 ± 0.0090** |
 | **Random Forest** | 200 trees, max depth 10 | 0.8772 ± 0.0116 |
 | **MLP (Neural Network)** | 1 hidden layer (64 units), α=0.01 | 0.8766 ± 0.0111 |
-| **Naive Bayes** | Gaussian NB and Complement NB variants explored | Lower than the above three |
+| **Naive Bayes** | Gaussian NB and Complement NB variants explored | Lower than the above accuracies |
 
 ### Why Logistic Regression Was Chosen
 
