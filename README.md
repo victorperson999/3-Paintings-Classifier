@@ -6,7 +6,7 @@ A machine learning classifier that predicts viewer responses to the paintings of
 
 ## Overview
 
-Given a dataset of paintings paired with viewer metadata and response attributes, the model predicts how a viewer will respond to a given painting. The project emphasizes thoughtful feature engineering over model complexity — a well-tuned Logistic Regression achieves **~90.5% validation accuracy**, outperforming more complex approaches that overfit to the training distribution.
+Given a dataset of paintings paired with viewer metadata and response attributes, the model predicts how a viewer will respond to a given painting. The project emphasizes thoughtful feature engineering over model complexity — a well-tuned Logistic Regression achieves **~89.35% validation accuracy** and a **stratified 5-fold cross-validation accuracy of 0.8855 ± 0.0070**, outperforming more complex approaches that overfit to the training distribution.
 
 ---
 
@@ -16,37 +16,61 @@ The feature representation combines three encoding strategies into a single dens
 
 | Feature Type | Description | Details |
 |---|---|---|
-| **Standardized Numerics** | Continuous and ordinal fields | Zero-mean, unit-variance scaling applied to numeric columns to ensure equal contribution across features with different magnitudes. |
-| **Multi-Hot Encodings** | Categorical fields with multiple values | Categories such as viewer demographics or painting attributes are encoded as binary indicator vectors, supporting multi-label fields where a single sample can belong to multiple categories. |
-| **Bag-of-Words (BoW)** | Free-text response fields | Text fields are tokenized and represented as token-count vectors. A consistent tokenizer is used across training and inference to prevent vocabulary mismatches. |
+| **Standardized Numerics** | Continuous and ordinal fields (emotional intensity, prominent colours, objects noticed, log-transformed price, likert-scale feelings) | Zero-mean, unit-variance scaling applied to numeric columns to ensure equal contribution across features with different magnitudes. |
+| **Multi-Hot Encodings** | Categorical fields (season association, room placement, viewing companion) | Categories are encoded as binary indicator vectors, supporting multi-label fields where a single sample can belong to multiple categories. |
+| **Bag-of-Words (BoW)** | Free-text response fields (description, food association) | Tokenized using sklearn's `CountVectorizer` with unigrams and a max feature cap of ~200. A consistent tokenizer is used across training and inference to prevent vocabulary mismatches. |
 
 All three representations are concatenated horizontally into a single 322-dimensional feature vector per sample.
+
+### Ablation Study
+
+A systematic feature ablation study was conducted to evaluate the impact of each feature group. Notably, removing the **soundtrack BoW feature improved accuracy by +0.30%**, indicating it introduced noise rather than useful signal. The most impactful features were **season association** (−4.14% when removed) and **likert emotions** (−2.37%), confirming the value of categorical and ordinal features for this task. The soundtrack feature was dropped from the final model accordingly.
 
 ---
 
 ## Model
 
 - **Algorithm:** Logistic Regression (one-vs-rest for multiclass)
-- **Regularization:** L2 with `C=0.1` (inverse regularization strength), selected via cross-validation to balance bias and variance.
-- **Validation Accuracy:** ~90.5%
+- **Regularization:** L2 with `C=0.1` (inverse regularization strength), selected via hyperparameter sweep over `C ∈ [0.01, 10.0]`, then narrowed to `[0.01, 0.2]`.
+- **Validation Accuracy:** ~89.35%
+- **Cross-Validation Accuracy:** 0.8855 ± 0.0070 (stratified 5-fold)
 - **Training:** Fit using scikit-learn during development, then model weights exported for standalone inference.
 
-### Why Logistic Regression?
+---
 
-Simpler models with strong feature engineering tend to generalize better on tabular datasets of moderate size. Logistic Regression with L2 regularization provides a well-understood decision boundary, is less prone to overfitting than tree ensembles or neural networks on this data scale, and produces interpretable weight vectors that reveal which features drive predictions.
+## Model Exploration
+
+Before selecting Logistic Regression, four model families were evaluated and compared using stratified 5-fold cross-validation:
+
+| Model | Best Hyperparameters | Cross-Validation Accuracy |
+|---|---|---|
+| **Logistic Regression** | `C=0.1`, L2 regularization | **0.8796 ± 0.0090** |
+| **Random Forest** | 200 trees, max depth 10 | 0.8772 ± 0.0116 |
+| **MLP (Neural Network)** | 1 hidden layer (64 units), α=0.01 | 0.8766 ± 0.0111 |
+| **Naive Bayes** | Gaussian NB and Complement NB variants explored | Lower than the above three |
+
+### Why Logistic Regression Was Chosen
+
+All three top models performed within a narrow band (~0.87–0.88), but Logistic Regression was chosen for several reasons: it achieved the highest cross-validation accuracy, exhibited the lowest variance across folds (± 0.0090), and is the simplest to implement and deploy. Its linear decision boundary paired well with the carefully engineered feature set, and its weight vectors are directly interpretable — revealing which features (e.g., season, emotion likert scores) most strongly drive predictions.
+
+The Random Forest showed signs of overfitting at higher depths (training accuracy approaching 98% while validation plateaued around 89%), and the MLP offered no meaningful accuracy gain over the linear model despite significantly higher complexity. Naive Bayes (both Gaussian and Complement variants) underperformed, likely due to its conditional independence assumption not holding well across the correlated feature groups.
+
+### BoW Hyperparameter Tuning
+
+After selecting Logistic Regression, further tuning was applied to the Bag-of-Words representation. Count-based unigrams consistently outperformed TF-IDF and bigram alternatives. The optimal max feature count was found to be approximately 200 features, beyond which additional vocabulary introduced diminishing returns and noise.
 
 ---
 
 ## Sklearn-Free Inference Pipeline
 
-To meet the challenge's deployment constraints (minimal dependencies), the trained model parameters are exported to a `.npz` file and inference is performed using only the NumPy library features:
+To meet the challenge's deployment constraints (minimal dependencies), the trained model parameters are exported to a `.npz` file and inference is performed using only the NumPy library:
 
 ```
 Training Phase (sklearn allowed)          Inference Phase (sklearn-free)
 ┌──────────────────────────┐              ┌──────────────────────────┐
 │  Load & preprocess data  │              │  Load model_params.npz   │
 │  Fit LogisticRegression  │  ──export──▶ │  (weights, bias, vocab,  │
-│  Validate (~90.5% acc)   │              │   scaler params, etc.)   │
+│  Validate (~89.35% acc)  │              │   scaler params, etc.)   │
 │  Export to .npz          │              │  Reconstruct features    │
 └──────────────────────────┘              │  Manual dot product +    │
                                           │   softmax / argmax       │
@@ -59,7 +83,7 @@ Training Phase (sklearn allowed)          Inference Phase (sklearn-free)
 - **BoW vocabulary** — The exact token-to-index mapping used during training, ensuring tokenization consistency.
 - **Encoding mappings** — Category-to-index dictionaries for reconstructing multi-hot vectors.
 
-### Inference Logic (NumPy only)
+### Inference Logic (Using NumPy)
 ```python
 # Reconstruct the 322-dim feature vector
 x = build_feature_vector(sample, scaler_params, vocab, encodings)
@@ -81,6 +105,8 @@ painting-classifier/
 └── README.md
 ```
 
+> **Note:** The actual file structure may vary — the above reflects the logical separation of concerns.
+
 ---
 
 ## Usage
@@ -100,7 +126,9 @@ python predict.py --model model_params.npz --input data/test.csv --output predic
 ## Technical Highlights
 
 - **322-feature representation** combining three encoding strategies into a unified dense vector — no deep learning, no complex ensembles.
-- **~90.5% validation accuracy** with a single Logistic Regression model (`C=0.1`, L2 regularization).
+- **Cross-validation accuracy of 0.8855 ± 0.0070** with a single Logistic Regression model (`C=0.1`, L2 regularization).
+- **Systematic model selection** — evaluated Logistic Regression, Random Forest, MLP, and Naive Bayes; chose the simplest model that achieved the best generalization.
+- **Ablation-driven feature selection** — identified and removed noisy features (soundtrack BoW) that improved accuracy by +0.30%.
 - **Fully portable inference** — the prediction pipeline depends only on NumPy, with all preprocessing parameters serialized into a single `.npz` artifact.
 - Diagnosed and resolved subtle **pandas Copy-on-Write** bugs and **tokenizer consistency** issues that silently degraded model performance.
 
@@ -111,7 +139,7 @@ python predict.py --model model_params.npz --input data/test.csv --output predic
 - **Language:** Python
 - **Training:** scikit-learn, pandas, NumPy
 - **Inference:** NumPy only (sklearn-free)
-- **Concepts:** Logistic Regression, feature engineering, bag-of-words, multi-hot encoding, standardization, model serialization, deployment-constrained inference
+- **Concepts:** Logistic Regression, feature engineering, bag-of-words, multi-hot encoding, standardization, model serialization, deployment-constrained inference, hyperparameter tuning, cross-validation, ablation studies
 
 ---
 
