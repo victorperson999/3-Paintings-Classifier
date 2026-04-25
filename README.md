@@ -69,7 +69,7 @@ To meet the challenge's deployment constraints (minimal dependencies), the train
 Training Phase (sklearn allowed)          Inference Phase (sklearn-free)
 ┌──────────────────────────┐              ┌──────────────────────────┐
 │  Load & preprocess data  │              │  Load model_params.npz   │
-│  Fit LogisticRegression  │  ──export──▶ │  (weights, bias, vocab,  │
+│  Fit LogisticRegression  │  ──export─ ▶ │  (weights, bias, vocab,  │
 │  Validate (~89.35% acc)  │              │   scaler params, etc.)   │
 │  Export to .npz          │              │  Reconstruct features    │
 └──────────────────────────┘              │  Manual dot product +    │
